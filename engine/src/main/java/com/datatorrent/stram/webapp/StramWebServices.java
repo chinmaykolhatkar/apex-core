@@ -94,13 +94,14 @@ import com.datatorrent.stram.util.ConfigValidator;
 import com.datatorrent.stram.util.JSONSerializationProvider;
 
 /**
- *
- * The web services implementation in the stram<p>
+ * 
+ * The web services implementation in the stram
+ * <p>
  * <br>
- * This class would ensure the the caller is authorized and then provide access to all the dag data stored
- * in the stram<br>
+ * This class would ensure the the caller is authorized and then provide access
+ * to all the dag data stored in the stram<br>
  * <br>
- *
+ * 
  * @since 0.3.2
  */
 @Singleton
@@ -156,13 +157,14 @@ public class StramWebServices
     return true;
   }
 
-  @SuppressWarnings({"rawtypes", "unchecked"})
+  @SuppressWarnings({ "rawtypes", "unchecked" })
   private void init()
   {
     //clear content type
     httpResponse.setContentType(null);
     if (!initialized) {
-      Map<Class<?>, Class<? extends StringCodec<?>>> codecs = dagManager.getApplicationAttributes().get(DAGContext.STRING_CODECS);
+      Map<Class<?>, Class<? extends StringCodec<?>>> codecs = dagManager.getApplicationAttributes().get(
+          DAGContext.STRING_CODECS);
       StringCodecs.loadConverters(codecs);
       if (codecs != null) {
         SimpleModule sm = new SimpleModule("DTSerializationModule", new Version(1, 0, 0, null));
@@ -172,14 +174,14 @@ public class StramWebServices
             sm.addSerializer(new SerializerBase(entry.getKey())
             {
               @Override
-              public void serialize(Object value, JsonGenerator jgen, SerializerProvider provider) throws IOException, JsonProcessingException
+              public void serialize(Object value, JsonGenerator jgen, SerializerProvider provider) throws IOException,
+                  JsonProcessingException
               {
                 jgen.writeString(codec.toString(value));
               }
 
             });
-          }
-          catch (Exception ex) {
+          } catch (Exception ex) {
             LOG.error("Caught exception when instantiating codec for class {}", entry.getKey().getName(), ex);
           }
         }
@@ -278,7 +280,8 @@ public class StramWebServices
   @GET
   @Path(PATH_PHYSICAL_PLAN_OPERATORS + "/{operatorId:\\d+}/ports/{portName}")
   @Produces(MediaType.APPLICATION_JSON)
-  public JSONObject getPortsInfo(@PathParam("operatorId") int operatorId, @PathParam("portName") String portName) throws Exception
+  public JSONObject getPortsInfo(@PathParam("operatorId") int operatorId, @PathParam("portName") String portName)
+      throws Exception
   {
     init();
     OperatorInfo oi = dagManager.getOperatorInfo(operatorId);
@@ -304,8 +307,7 @@ public class StramWebServices
     if (parent != null) {
       if (parent.equals("chart")) {
         parent = "com.datatorrent.lib.chart.ChartOperator";
-      }
-      else if (parent.equals("filter")) {
+      } else if (parent.equals("filter")) {
         parent = "com.datatorrent.common.util.SimpleFilterOperator";
       }
     }
@@ -320,11 +322,9 @@ public class StramWebServices
       }
 
       result.put("operatorClasses", classNames);
-    }
-    catch (ClassNotFoundException ex) {
+    } catch (ClassNotFoundException ex) {
       throw new NotFoundException();
-    }
-    catch (JSONException ex) {
+    } catch (JSONException ex) {
     }
     return result;
   }
@@ -342,17 +342,16 @@ public class StramWebServices
       Class<?> clazz = Class.forName(className);
       if (Operator.class.isAssignableFrom(clazz)) {
         return operatorDiscoverer.describeOperator(className);
-      }
-      else {
+      } else {
         throw new NotFoundException();
       }
-    }
-    catch (Exception ex) {
+    } catch (Exception ex) {
       throw new NotFoundException();
     }
   }
 
-  @POST // not supported by WebAppProxyServlet, can only be called directly
+  @POST
+  // not supported by WebAppProxyServlet, can only be called directly
   @Path(PATH_SHUTDOWN)
   @Produces(MediaType.APPLICATION_JSON)
   public JSONObject shutdown()
@@ -394,7 +393,8 @@ public class StramWebServices
   @POST
   @Path(PATH_PHYSICAL_PLAN_OPERATORS + "/{opId:\\d+}/ports/{portName}/" + PATH_RECORDINGS_START)
   @Produces(MediaType.APPLICATION_JSON)
-  public JSONObject startRecording(@PathParam("opId") int opId, @PathParam("portName") String portName, String content) throws JSONException
+  public JSONObject startRecording(@PathParam("opId") int opId, @PathParam("portName") String portName, String content)
+      throws JSONException
   {
     LOG.debug("Start recording on {}.{} requested", opId, portName);
     JSONObject response = new JSONObject();
@@ -474,8 +474,7 @@ public class StramWebServices
     ContainerInfo ci = null;
     if (containerId.equals(System.getenv(ApplicationConstants.Environment.CONTAINER_ID.toString()))) {
       ci = dagManager.getAppMasterContainerInfo();
-    }
-    else {
+    } else {
       for (ContainerInfo containerInfo : dagManager.getCompletedContainerInfo()) {
         if (containerInfo.id.equals(containerId)) {
           ci = containerInfo;
@@ -492,7 +491,8 @@ public class StramWebServices
     return new JSONObject(objectMapper.writeValueAsString(ci));
   }
 
-  @POST // not supported by WebAppProxyServlet, can only be called directly
+  @POST
+  // not supported by WebAppProxyServlet, can only be called directly
   @Path(PATH_PHYSICAL_PLAN_CONTAINERS + "/{containerId}/kill")
   @Produces(MediaType.APPLICATION_JSON)
   public JSONObject killContainer(@PathParam("containerId") String containerId)
@@ -500,7 +500,8 @@ public class StramWebServices
     JSONObject response = new JSONObject();
     if (containerId.equals(System.getenv(ApplicationConstants.Environment.CONTAINER_ID.toString()))) {
       LOG.info("Received a kill request on application master container. Exiting.");
-      new Thread() {
+      new Thread()
+      {
 
         @Override
         public void run()
@@ -508,15 +509,13 @@ public class StramWebServices
           try {
             Thread.sleep(3000);
             System.exit(1);
-          }
-          catch (InterruptedException ex) {
+          } catch (InterruptedException ex) {
             LOG.info("Received interrupt, aborting exit.");
           }
         }
 
       }.start();
-    }
-    else {
+    } else {
       dagManager.stopContainer(containerId);
     }
     return response;
@@ -531,7 +530,7 @@ public class StramWebServices
     nodeList.operators = dagManager.getLogicalOperatorInfoList();
     return new JSONObject(objectMapper.writeValueAsString(nodeList));
   }
-  
+
   @GET
   @Path(PATH_LOGICAL_PLAN_MODULES)
   @Produces(MediaType.APPLICATION_JSON)
@@ -551,7 +550,7 @@ public class StramWebServices
     nodeList.modules = dagManager.getLogicalModuleInfoList(true);
     return new JSONObject(objectMapper.writeValueAsString(nodeList));
   }
-  
+
   @GET
   @Path(PATH_LOGICAL_PLAN_OPERATORS + "/{operatorName}")
   @Produces(MediaType.APPLICATION_JSON)
@@ -571,26 +570,26 @@ public class StramWebServices
   @Produces(MediaType.APPLICATION_JSON)
   public JSONObject getLogicalModule(@PathParam("moduleName") String moduleName) throws Exception
   {
-    ModuleMeta logicalModule = dagManager.getLogicalPlan().getModuleMeta(moduleName);
+    ModuleMeta logicalModule = dagManager.getModuleMeta(moduleName);
     if (logicalModule == null) {
       throw new NotFoundException();
     }
     LogicalModuleInfo logicalModuleInfo;
-    logicalModuleInfo = dagManager.getLogicalModuleInfo(moduleName, false);
+    logicalModuleInfo = dagManager.getLogicalModuleInfo(moduleName, false, dagManager.getLogicalPlan());
     return new JSONObject(objectMapper.writeValueAsString(logicalModuleInfo));
   }
-
+  
   @GET
   @Path(PATH_LOGICAL_PLAN_MODULES + "/{moduleName}/flatten")
   @Produces(MediaType.APPLICATION_JSON)
   public JSONObject getLogicalModuleFlatten(@PathParam("moduleName") String moduleName) throws Exception
   {
-    ModuleMeta logicalModule = dagManager.getLogicalPlan().getModuleMeta(moduleName);
+    ModuleMeta logicalModule = dagManager.getModuleMeta(moduleName);
     if (logicalModule == null) {
       throw new NotFoundException();
     }
     LogicalModuleInfo logicalModuleInfo;
-    logicalModuleInfo = dagManager.getLogicalModuleInfo(moduleName, true);
+    logicalModuleInfo = dagManager.getLogicalModuleInfo(moduleName, true, dagManager.getLogicalPlan());
     return new JSONObject(objectMapper.writeValueAsString(logicalModuleInfo));
   }
 
@@ -608,7 +607,8 @@ public class StramWebServices
     return new JSONObject(objectMapper.writeValueAsString(operatorAggregationInfo));
   }
 
-  @POST // not supported by WebAppProxyServlet, can only be called directly
+  @POST
+  // not supported by WebAppProxyServlet, can only be called directly
   @Path(PATH_LOGICAL_PLAN_OPERATORS + "/{operatorName}/properties")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
@@ -629,18 +629,17 @@ public class StramWebServices
         LOG.debug("Setting property for {}: {}={}", operatorName, key, val);
         dagManager.setOperatorProperty(operatorName, key, val);
       }
-    }
-    catch (JSONException ex) {
+    } catch (JSONException ex) {
       LOG.warn("Got JSON Exception: ", ex);
-    }
-    catch (Exception ex) {
+    } catch (Exception ex) {
       LOG.error("Caught exception: ", ex);
       throw new RuntimeException(ex);
     }
     return response;
   }
-  
-  @POST // not supported by WebAppProxyServlet, can only be called directly
+
+  @POST
+  // not supported by WebAppProxyServlet, can only be called directly
   @Path(PATH_PHYSICAL_PLAN_OPERATORS + "/{operatorId:\\d+}/properties")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
@@ -656,8 +655,7 @@ public class StramWebServices
         String val = request.isNull(key) ? null : request.getString(key);
         dagManager.setPhysicalOperatorProperty(operatorId, key, val);
       }
-    }
-    catch (JSONException ex) {
+    } catch (JSONException ex) {
       LOG.warn("Got JSON Exception: ", ex);
     }
     return response;
@@ -666,7 +664,8 @@ public class StramWebServices
   @GET
   @Path(PATH_LOGICAL_PLAN_OPERATORS + "/{operatorName}/attributes")
   @Produces(MediaType.APPLICATION_JSON)
-  public JSONObject getOperatorAttributes(@PathParam("operatorName") String operatorName, @QueryParam("attributeName") String attributeName)
+  public JSONObject getOperatorAttributes(@PathParam("operatorName") String operatorName,
+      @QueryParam("attributeName") String attributeName)
   {
     OperatorMeta logicalOperator = dagManager.getLogicalPlan().getOperatorMeta(operatorName);
     if (logicalOperator == null) {
@@ -720,8 +719,7 @@ public class StramWebServices
         ports.put(port);
       }
       result.put("ports", ports);
-    }
-    catch (JSONException ex) {
+    } catch (JSONException ex) {
       throw new RuntimeException(ex);
     }
     return result;
@@ -784,8 +782,7 @@ public class StramWebServices
           return port;
         }
       }
-    }
-    catch (JSONException ex) {
+    } catch (JSONException ex) {
       throw new RuntimeException(ex);
     }
     throw new NotFoundException();
@@ -826,7 +823,8 @@ public class StramWebServices
   @GET
   @Path(PATH_LOGICAL_PLAN_OPERATORS + "/{operatorName}/ports/{portName}/attributes")
   @Produces(MediaType.APPLICATION_JSON)
-  public JSONObject getPortAttributes(@PathParam("operatorName") String operatorName, @PathParam("portName") String portName, @QueryParam("attributeName") String attributeName)
+  public JSONObject getPortAttributes(@PathParam("operatorName") String operatorName,
+      @PathParam("portName") String portName, @QueryParam("attributeName") String attributeName)
   {
     OperatorMeta logicalOperator = dagManager.getLogicalPlan().getOperatorMeta(operatorName);
     if (logicalOperator == null) {
@@ -838,7 +836,8 @@ public class StramWebServices
   @GET
   @Path(PATH_LOGICAL_PLAN_OPERATORS + "/{operatorName}/properties")
   @Produces(MediaType.APPLICATION_JSON)
-  public JSONObject getOperatorProperties(@PathParam("operatorName") String operatorName, @QueryParam("propertyName") String propertyName) throws IOException, JSONException
+  public JSONObject getOperatorProperties(@PathParam("operatorName") String operatorName,
+      @QueryParam("propertyName") String propertyName) throws IOException, JSONException
   {
     init();
     OperatorMeta logicalOperator = dagManager.getLogicalPlan().getOperatorMeta(operatorName);
@@ -856,13 +855,11 @@ public class StramWebServices
         Map.Entry<String, Object> entry = (Map.Entry<String, Object>)entryIterator.next();
         if (propertyName == null) {
           m.put(entry.getKey(), entry.getValue());
-        }
-        else if (propertyName.equals(entry.getKey())) {
+        } else if (propertyName.equals(entry.getKey())) {
           m.put(entry.getKey(), entry.getValue());
           break;
         }
-      }
-      catch (Exception ex) {
+      } catch (Exception ex) {
         LOG.warn("Caught exception", ex);
       }
     }
@@ -872,7 +869,8 @@ public class StramWebServices
   @GET
   @Path(PATH_LOGICAL_PLAN_MODULES + "/{moduleName}/properties")
   @Produces(MediaType.APPLICATION_JSON)
-  public JSONObject getModuleProperties(@PathParam("moduleName") String moduleName, @QueryParam("propertyName") String propertyName) throws IOException, JSONException
+  public JSONObject getModuleProperties(@PathParam("moduleName") String moduleName,
+      @QueryParam("propertyName") String propertyName) throws IOException, JSONException
   {
     init();
     ModuleMeta logicalModule = dagManager.getLogicalPlan().getModuleMeta(moduleName);
@@ -904,7 +902,8 @@ public class StramWebServices
   @GET
   @Path(PATH_PHYSICAL_PLAN_OPERATORS + "/{operatorId:\\d+}/properties")
   @Produces(MediaType.APPLICATION_JSON)
-  public JSONObject getPhysicalOperatorProperties(@PathParam("operatorId") int operatorId, @QueryParam("propertyName") String propertyName, @QueryParam("waitTime") long waitTime)
+  public JSONObject getPhysicalOperatorProperties(@PathParam("operatorId") int operatorId,
+      @QueryParam("propertyName") String propertyName, @QueryParam("waitTime") long waitTime)
   {
     if (waitTime == 0) {
       waitTime = WAIT_TIME;
@@ -914,11 +913,10 @@ public class StramWebServices
 
     try {
       Object object = future.get(waitTime, TimeUnit.MILLISECONDS);
-      if(object != null) {
+      if (object != null) {
         return new JSONObject(new ObjectMapper().writeValueAsString(object));
       }
-    }
-    catch (Exception ex) {
+    } catch (Exception ex) {
       LOG.warn("Caught exception", ex);
       throw new RuntimeException(ex);
     }
@@ -930,7 +928,8 @@ public class StramWebServices
   @Produces(MediaType.APPLICATION_JSON)
   public JSONObject getLogicalPlan() throws JSONException, IOException
   {
-    return new JSONObject(objectMapper.writeValueAsString(LogicalPlanSerializer.convertToMapV2(dagManager.getLogicalPlan(), false)));
+    return new JSONObject(objectMapper.writeValueAsString(LogicalPlanSerializer.convertToMap(
+        dagManager.getLogicalPlan(), false)));
   }
 
   @GET
@@ -938,10 +937,12 @@ public class StramWebServices
   @Produces(MediaType.APPLICATION_JSON)
   public JSONObject getLogicalPlanFlatten() throws JSONException, IOException
   {
-    return new JSONObject(objectMapper.writeValueAsString(LogicalPlanSerializer.convertToMapV2(dagManager.getLogicalPlan(), true)));
+    return new JSONObject(objectMapper.writeValueAsString(LogicalPlanSerializer.convertToMap(
+        dagManager.getLogicalPlan(), true)));
   }
 
-  @POST // not supported by WebAppProxyServlet, can only be called directly
+  @POST
+  // not supported by WebAppProxyServlet, can only be called directly
   @Path(PATH_LOGICAL_PLAN)
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
@@ -953,7 +954,8 @@ public class StramWebServices
       List<LogicalPlanRequest> requests = new ArrayList<LogicalPlanRequest>();
       for (int i = 0; i < jsonArray.length(); i++) {
         JSONObject jsonObj = (JSONObject)jsonArray.get(i);
-        LogicalPlanRequest requestObj = (LogicalPlanRequest)Class.forName(LogicalPlanRequest.class.getPackage().getName() + "." + jsonObj.getString("requestType")).newInstance();
+        LogicalPlanRequest requestObj = (LogicalPlanRequest)Class.forName(
+            LogicalPlanRequest.class.getPackage().getName() + "." + jsonObj.getString("requestType")).newInstance();
         @SuppressWarnings("unchecked")
         Map<String, String> properties = BeanUtils.describe(requestObj);
         @SuppressWarnings("unchecked")
@@ -970,18 +972,15 @@ public class StramWebServices
       }
       Future<?> fr = dagManager.logicalPlanModification(requests);
       fr.get(3000, TimeUnit.MILLISECONDS);
-    }
-    catch (Exception ex) {
+    } catch (Exception ex) {
       LOG.error("Error processing plan change", ex);
       try {
         if (ex instanceof ExecutionException) {
           response.put("error", ex.getCause().toString());
-        }
-        else {
+        } else {
           response.put("error", ex.toString());
         }
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
         // ignore
       }
     }
@@ -1008,8 +1007,7 @@ public class StramWebServices
         if (ConfigValidator.validateLoggersLevel(target, level)) {
           LOG.info("changing logger level for {} to {}", target, level);
           targetChanges.put(target, level);
-        }
-        else {
+        } else {
           LOG.warn("incorrect logger settings {}:{}", target, level);
         }
       }
@@ -1019,8 +1017,7 @@ public class StramWebServices
         //Changing the levels on Stram after sending the message to all containers.
         DTLoggerFactory.getInstance().changeLoggersLevel(targetChanges);
       }
-    }
-    catch (JSONException ex) {
+    } catch (JSONException ex) {
       LOG.warn("Got JSON Exception: ", ex);
     }
     return response;
@@ -1045,8 +1042,7 @@ public class StramWebServices
         }
       }
       response.put("loggers", loggersArray);
-    }
-    catch (JSONException ex) {
+    } catch (JSONException ex) {
       LOG.warn("Got JSON Exception: ", ex);
     }
     return response;
@@ -1055,7 +1051,8 @@ public class StramWebServices
   @GET
   @Path(PATH_LOGGERS)
   @Produces(MediaType.APPLICATION_JSON)
-  public JSONObject getLoggerLevels() throws JSONException {
+  public JSONObject getLoggerLevels() throws JSONException
+  {
     init();
     JSONObject response = new JSONObject();
     JSONArray levelsArray = new JSONArray();

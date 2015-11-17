@@ -67,8 +67,10 @@ import com.datatorrent.stram.plan.logical.Operators;
 import com.datatorrent.stram.plan.logical.Operators.PortContextPair;
 
 /**
- * <p>LogicalPlanSerializer class.</p>
- *
+ * <p>
+ * LogicalPlanSerializer class.
+ * </p>
+ * 
  * @since 0.3.2
  */
 @Provider
@@ -102,14 +104,14 @@ public class LogicalPlanSerializer extends JsonSerializer<LogicalPlan>
   private static final Logger LOG = LoggerFactory.getLogger(LogicalPlanSerializer.class);
 
   /**
-   *
+   * 
    * @param dag
    * @return
    */
   public static Map<String, Object> convertToMap(LogicalPlan dag)
   {
     HashMap<String, Object> result = new HashMap<String, Object>();
-    ArrayList<Object> operatorArray = new ArrayList< Object>();
+    ArrayList<Object> operatorArray = new ArrayList<Object>();
     ArrayList<Object> streamMap = new ArrayList<Object>();
     //result.put("applicationName", appConfig.getName());
     result.put("operators", operatorArray);
@@ -119,7 +121,7 @@ public class LogicalPlanSerializer extends JsonSerializer<LogicalPlan>
     // should we put the DAGContext info here?
 
     Map<String, Object> dagAttrs = new HashMap<String, Object>();
-    for (Map.Entry<Attribute<Object>, Object> e : Attribute.AttributeMap.AttributeInitializer.getAllAttributes(dag, Context.DAGContext.class).entrySet()){
+    for (Map.Entry<Attribute<Object>, Object> e : Attribute.AttributeMap.AttributeInitializer.getAllAttributes(dag,Context.DAGContext.class).entrySet()) {
       dagAttrs.put(e.getKey().getSimpleName(), e.getValue());
     }
     result.put("attributes", dagAttrs);
@@ -154,8 +156,7 @@ public class LogicalPlanSerializer extends JsonSerializer<LogicalPlan>
 
       try {
         str = new ObjectMapperString(propertyObjectMapper.writeValueAsString(operatorMeta.getOperator()));
-      }
-      catch (Throwable ex) {
+      } catch (Throwable ex) {
         LOG.error("Got exception when trying to get properties for operator {}", operatorMeta.getName(), ex);
         str = null;
       }
@@ -171,7 +172,8 @@ public class LogicalPlanSerializer extends JsonSerializer<LogicalPlan>
         portDetailMap.put("name", portName);
         portDetailMap.put("type", "input");
         portDetailMap.put("attributes", portAttributeMap);
-        rawAttributes = Attribute.AttributeMap.AttributeInitializer.getAllAttributes(portMeta, Context.PortContext.class);
+        rawAttributes = Attribute.AttributeMap.AttributeInitializer.getAllAttributes(portMeta,
+            Context.PortContext.class);
         for (Map.Entry<Attribute<Object>, Object> attEntry : rawAttributes.entrySet()) {
           portAttributeMap.put(attEntry.getKey().getSimpleName(), attEntry.getValue());
         }
@@ -185,7 +187,8 @@ public class LogicalPlanSerializer extends JsonSerializer<LogicalPlan>
         portDetailMap.put("name", portName);
         portDetailMap.put("type", "output");
         portDetailMap.put("attributes", portAttributeMap);
-        rawAttributes = Attribute.AttributeMap.AttributeInitializer.getAllAttributes(portMeta, Context.PortContext.class);
+        rawAttributes = Attribute.AttributeMap.AttributeInitializer.getAllAttributes(portMeta,
+            Context.PortContext.class);
         for (Map.Entry<Attribute<Object>, Object> attEntry : rawAttributes.entrySet()) {
           portAttributeMap.put(attEntry.getKey().getSimpleName(), attEntry.getValue());
         }
@@ -226,7 +229,7 @@ public class LogicalPlanSerializer extends JsonSerializer<LogicalPlan>
    * @param dag
    * @return
    */
-  public static Map<String, Object> convertToMapV2(LogicalPlan dag, boolean flatten)
+  public static Map<String, Object> convertToMap(LogicalPlan dag, boolean flatten)
   {
     HashMap<String, Object> result = new HashMap<String, Object>();
     ArrayList<Object> operatorArray = new ArrayList<Object>();
@@ -235,7 +238,7 @@ public class LogicalPlanSerializer extends JsonSerializer<LogicalPlan>
     result.put("streams", streamsArray);
 
     Map<String, Object> dagAttrs = new HashMap<String, Object>();
-    for (Map.Entry<Attribute<Object>, Object> e : Attribute.AttributeMap.AttributeInitializer.getAllAttributes(dag, Context.DAGContext.class).entrySet()) {
+    for (Map.Entry<Attribute<Object>, Object> e : Attribute.AttributeMap.AttributeInitializer.getAllAttributes(dag,Context.DAGContext.class).entrySet()) {
       dagAttrs.put(e.getKey().getSimpleName(), e.getValue());
     }
     result.put("attributes", dagAttrs);
@@ -281,14 +284,12 @@ public class LogicalPlanSerializer extends JsonSerializer<LogicalPlan>
       return null;
     }
     Map<String, Object> obj = fillLogicalModuleDetails(moduleMeta, dag, flatten);
-    List<Object> modList = new ArrayList<Object>();
-    obj.put("modules", modList);
-    for (ModuleMeta meta : dag.getAllModules()) {
-      if (meta.getParentModuleName() != null && meta.getParentModuleName().equals(moduleName)) {
-        if (!flatten) {
-          modList.add(fillLogicalModuleDetails(moduleMeta, dag, flatten));
-        } else {
-          modList.add(getLogicalModuleInfo(dag, fillLogicalModuleDetails(meta, dag, flatten).get("name").toString(), flatten));
+    if (flatten) {
+      List<Object> modList = new ArrayList<Object>();
+      obj.put("modules", modList);
+      for (ModuleMeta meta : moduleMeta.getDag().getAllModules()) {
+        if (meta.getParentModuleName() != null && meta.getParentModuleName().equals(moduleName)) {
+          modList.add(getLogicalModuleInfo(moduleMeta.getDag(),fillLogicalModuleDetails(meta, moduleMeta.getDag(), flatten).get("name").toString(), flatten));
         }
       }
     }
@@ -403,27 +404,13 @@ public class LogicalPlanSerializer extends JsonSerializer<LogicalPlan>
     moduleDetailMap.put("streams", streamArray);
     if (flatten) {
       for (OperatorMeta operatorMeta : dag.getAllOperators()) {
-        if (moduleMeta.getParentModuleName() == null) {
-          if (operatorMeta.getModuleName() == null) {
-            operatorArray.add(getLogicalOperatorDetails(operatorMeta));
-          }
-        } else {
-          if (operatorMeta.getModuleName() != null
-            && moduleMeta.getParentModuleName().equals(operatorMeta.getModuleName())) {
-            operatorArray.add(getLogicalOperatorDetails(operatorMeta));
-          }
+        if (operatorMeta.getModuleName() != null && operatorMeta.getModuleName() == moduleMeta.getName()) {
+          operatorArray.add(getLogicalOperatorDetails(operatorMeta));
         }
       }
       for (StreamMeta streamMeta : dag.getAllStreams()) {
-        if (moduleMeta.getParentModuleName() == null) {
-          if (streamMeta.getModuleName() == null) {
-            streamArray.add(getLogicalStreamDetails(streamMeta));
-          }
-        } else {
-          if (streamMeta.getModuleName() != null
-            && moduleMeta.getParentModuleName().equals(streamMeta.getModuleName())) {
-            streamArray.add(getLogicalStreamDetails(streamMeta));
-          }
+        if (streamMeta.getModuleName() != null && streamMeta.getModuleName() == moduleMeta.getName()) {
+          streamArray.add(getLogicalStreamDetails(streamMeta));
         }
       }
     }
@@ -449,8 +436,7 @@ public class LogicalPlanSerializer extends JsonSerializer<LogicalPlan>
           if (!entry.getKey().equals("class") && !entry.getKey().equals("name") && entry.getValue() != null) {
             props.setProperty(operatorKey + "." + entry.getKey(), entry.getValue());
           }
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
           LOG.warn("Error trying to get a property of operator {}", operatorMeta.getName(), ex);
         }
       }
@@ -461,7 +447,8 @@ public class LogicalPlanSerializer extends JsonSerializer<LogicalPlan>
       String streamKey = LogicalPlanConfiguration.STREAM_PREFIX + streamMeta.getName();
       OutputPortMeta source = streamMeta.getSource();
       List<InputPortMeta> sinks = streamMeta.getSinks();
-      props.setProperty(streamKey + "." + LogicalPlanConfiguration.STREAM_SOURCE, source.getOperatorMeta().getName() + "." + source.getPortName());
+      props.setProperty(streamKey + "." + LogicalPlanConfiguration.STREAM_SOURCE, source.getOperatorMeta().getName()
+        + "." + source.getPortName());
       String sinksValue = "";
       for (InputPortMeta sink : sinks) {
         if (!sinksValue.isEmpty()) {
@@ -510,8 +497,7 @@ public class LogicalPlanSerializer extends JsonSerializer<LogicalPlan>
                 value += list.get(i).toString();
               }
               props.setProperty(operatorKey + "." + propertyName, value);
-            }
-            else {
+            } else {
               props.setProperty(operatorKey + "." + propertyName, properties.get(propertyName));
             }
           }
@@ -528,13 +514,15 @@ public class LogicalPlanSerializer extends JsonSerializer<LogicalPlan>
       JSONObject sourceDetail = streamDetail.getJSONObject("source");
       JSONArray sinksList = streamDetail.getJSONArray("sinks");
 
-      props.setProperty(streamKey + "." + LogicalPlanConfiguration.STREAM_SOURCE, sourceDetail.getString("operatorName") + "." + sourceDetail.getString("portName"));
+      props.setProperty(streamKey + "." + LogicalPlanConfiguration.STREAM_SOURCE,
+        sourceDetail.getString("operatorName") + "." + sourceDetail.getString("portName"));
       String sinksValue = "";
       for (int i = 0; i < sinksList.length(); i++) {
         if (!sinksValue.isEmpty()) {
           sinksValue += ",";
         }
-        sinksValue += sinksList.getJSONObject(i).getString("operatorName") + "." + sinksList.getJSONObject(i).getString("portName");
+        sinksValue += sinksList.getJSONObject(i).getString("operatorName") + "."
+            + sinksList.getJSONObject(i).getString("portName");
       }
       props.setProperty(streamKey + "." + LogicalPlanConfiguration.STREAM_SINKS, sinksValue);
       String locality = streamDetail.optString("locality");
@@ -554,7 +542,8 @@ public class LogicalPlanSerializer extends JsonSerializer<LogicalPlan>
   }
 
   @Override
-  public void serialize(LogicalPlan dag, JsonGenerator jg, SerializerProvider sp) throws IOException, JsonProcessingException
+  public void serialize(LogicalPlan dag, JsonGenerator jg, SerializerProvider sp) throws IOException,
+      JsonProcessingException
   {
     jg.writeObject(convertToMap(dag));
   }
