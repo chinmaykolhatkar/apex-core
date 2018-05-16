@@ -2,11 +2,13 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider'
 import AppBar from 'material-ui/AppBar';
-import { Tabs, Tab, SelectField, MenuItem } from 'material-ui';
+import { Tabs, Tab, SelectField, MenuItem, Avatar, SvgIcon } from 'material-ui';
 import SwipeableViews from 'react-swipeable-views';
 import GenericInfo from './generic'
 import LogicalPlan from './logical'
 import PhysicalPlan from './physical'
+import { getTheme } from './theme.js'
+import logo from './logo.svg'
 
 class Console extends React.Component {
     constructor(props) {
@@ -30,10 +32,10 @@ class Console extends React.Component {
 
     render() {
         return (
-            <MuiThemeProvider>
+            <MuiThemeProvider muiTheme={getTheme()} >
             <AppBar 
                 title="Apache Apex Application Information" 
-                iconElementLeft="">
+                iconElementLeft={<img src={logo} className="App-logo" alt="logo" />}>
                 <SelectField
                     floatingLabelText="Update Frequency"
                     value={this.state.frequency}
