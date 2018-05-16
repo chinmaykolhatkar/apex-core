@@ -2,7 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider'
 import AppBar from 'material-ui/AppBar';
-import { Tabs, Tab, SelectField, MenuItem, Avatar, SvgIcon } from 'material-ui';
+import { Tabs, Tab, SelectField, MenuItem } from 'material-ui';
 import SwipeableViews from 'react-swipeable-views';
 import GenericInfo from './generic'
 import LogicalPlan from './logical'
@@ -14,20 +14,23 @@ class Console extends React.Component {
     constructor(props) {
         super(props)
         this.state = {currentTab : 0, frequency : 0}
+        this.references = {0 : React.createRef(), 1 : React.createRef(), 2 : React.createRef()}
     }
 
     onTabChange = (value) => {
         this.setState({currentTab : value, });
+        // State change does not happen immediately. Hence calling handleRefresh after a timeout.
+        setTimeout(this.handleRefresh, 50)
     }
 
     onFrequencyChange = (event, index, value) => {
         this.setState({frequency : value, })
-        clearTimeout(this.timerId)
-        this.timerId = setTimeout(this.handleRefresh, value);
+        clearInterval(this.timerId)
+        this.timerId = setInterval(this.handleRefresh, value * 1000);
     }
 
     handleRefresh = () => {
-        
+        this.references[this.state.currentTab].current.updateState()
     }
 
     render() {
@@ -56,9 +59,9 @@ class Console extends React.Component {
             <SwipeableViews
                 index={this.state.currentTab}
                 onChangeIndex={this.onTabChange}>
-                <div><GenericInfo /></div>
-                <div><LogicalPlan /></div>
-                <div><PhysicalPlan /></div>
+                <div><GenericInfo ref={this.references[0]}/></div>
+                <div><LogicalPlan ref={this.references[1]}/></div>
+                <div><PhysicalPlan ref={this.references[2]}/></div>
             </SwipeableViews>
             </MuiThemeProvider>
         )
